@@ -25,10 +25,19 @@ class DecisionTree(Tree):
             dataset
         )
         if have_same_classification:
-            self.add_node(DecisionTreeNode(decision=classification, parent_attribute_value=parent_attribute_value), parent=parent)
+            self.add_node(
+                DecisionTreeNode(
+                    decision=classification,
+                    parent_attribute_value=parent_attribute_value,
+                ),
+                parent=parent,
+            )
         else:
             most_important_attribute = self._get_most_important_attribute(dataset)
-            current_node = DecisionTreeNode(attribute=most_important_attribute, parent_attribute_value=parent_attribute_value)
+            current_node = DecisionTreeNode(
+                attribute=most_important_attribute,
+                parent_attribute_value=parent_attribute_value,
+            )
             attribute_values = self._get_attribute_values(
                 dataset, most_important_attribute
             )
@@ -38,7 +47,11 @@ class DecisionTree(Tree):
                 self.add_node(current_node)
             for value in attribute_values:
                 data_subset = dataset.loc[dataset[most_important_attribute] == value]
-                self.construct(data_subset.drop(columns=[most_important_attribute]), current_node, parent_attribute_value=value)
+                self.construct(
+                    data_subset.drop(columns=[most_important_attribute]),
+                    current_node,
+                    parent_attribute_value=value,
+                )
 
     def evaluate(self, instance):
         pass
@@ -68,7 +81,11 @@ class DecisionTree(Tree):
             if attribute_entropy < most_important_attribute_entropy:
                 most_important_attribute = attribute
                 most_important_attribute_entropy = attribute_entropy
-        print('Attribute: {} / Entropy: {}'.format(most_important_attribute, most_important_attribute_entropy))
+        print(
+            "Attribute: {} / Entropy: {}".format(
+                most_important_attribute, most_important_attribute_entropy
+            )
+        )
         return most_important_attribute
 
     def _calculate_entropy(self, subset):
