@@ -7,7 +7,6 @@ dataset = {
     'classification': ['true', 'true', 'false', 'false', 'false'],
 }
 dataframe = pd.DataFrame(data=dataset)
-print(dataframe.to_string())
 decision_tree = DecisionTree('classification')
 decision_tree.construct(dataframe)
 decision_tree.show()

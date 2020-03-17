@@ -81,11 +81,6 @@ class DecisionTree(Tree):
             if attribute_entropy < most_important_attribute_entropy:
                 most_important_attribute = attribute
                 most_important_attribute_entropy = attribute_entropy
-        print(
-            "Attribute: {} / Entropy: {}".format(
-                most_important_attribute, most_important_attribute_entropy
-            )
-        )
         return most_important_attribute
 
     def _calculate_entropy(self, subset):

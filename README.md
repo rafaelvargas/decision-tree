@@ -1,4 +1,4 @@
-# Decision trees
+# Decision tree
 
 Implementation of an algorithm for generating decision trees to be used as predictive models.
 
