@@ -3,13 +3,13 @@ import numpy as np
 
 
 class DecisionTreeNode(Node):
-    def __init__(self, attribute=None, parent_attribute_value=None, decision=None):
+    def __init__(self, attribute=None, parent_attribute_value=None, decision=None, information_gain=None):
         if decision:
             super().__init__(tag=str((parent_attribute_value, decision)))
         elif not parent_attribute_value:
-            super().__init__(tag=str(attribute))
+            super().__init__(tag=str((attribute, information_gain)))
         else:
-            super().__init__(tag=str((parent_attribute_value, attribute)))
+            super().__init__(tag=str(((parent_attribute_value, attribute, information_gain))))
         self.parent_attribute_value = parent_attribute_value
         self.attribute = attribute
         self.decision = decision
@@ -33,10 +33,11 @@ class DecisionTree(Tree):
                 parent=parent,
             )
         else:
-            most_important_attribute = self._get_most_important_attribute(dataset)
+            most_important_attribute, information_gain = self._get_most_important_attribute(dataset)
             current_node = DecisionTreeNode(
                 attribute=most_important_attribute,
                 parent_attribute_value=parent_attribute_value,
+                information_gain=information_gain
             )
             attribute_values = self._get_attribute_values(
                 dataset, most_important_attribute
@@ -81,7 +82,9 @@ class DecisionTree(Tree):
             if attribute_entropy < most_important_attribute_entropy:
                 most_important_attribute = attribute
                 most_important_attribute_entropy = attribute_entropy
-        return most_important_attribute
+        dataset_entropy = self._calculate_entropy(dataset)
+        information_gain = round(dataset_entropy - most_important_attribute_entropy, 3)
+        return most_important_attribute, information_gain
 
     def _calculate_entropy(self, subset):
         grouped_by_classification = subset.groupby(self.classification_attribute)
