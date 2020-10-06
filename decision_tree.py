@@ -5,9 +5,9 @@ import pandas as pd
 
 class DecisionTreeNode(Node):
     def __init__(self, attribute=None, parent_attribute_value=None, decision=None, information_gain=None):
-        if decision:
+        if decision is not None:
             super().__init__(tag=str((parent_attribute_value, decision)))
-        elif not parent_attribute_value:
+        elif parent_attribute_value is None:
             super().__init__(tag=str((attribute, information_gain)))
         else:
             super().__init__(tag=str(((parent_attribute_value, attribute, information_gain))))
@@ -21,7 +21,7 @@ class DecisionTree(Tree):
         super().__init__()
         self.classification_attribute = classification_attribute
 
-    def construct(self, dataset, parent=None, parent_attribute_value=None):
+    def construct(self, dataset, parent=None, parent_attribute_value=None, parent_majority_class=None):
         have_same_classification, classification = self._have_same_classification(
             dataset
         )
@@ -31,7 +31,7 @@ class DecisionTree(Tree):
                     decision=classification,
                     parent_attribute_value=parent_attribute_value,
                 ),
-                parent=parent,
+                parent=parent
             )
         else:
             most_important_attribute, information_gain = self._get_most_important_attribute(dataset)
@@ -53,6 +53,7 @@ class DecisionTree(Tree):
                     data_subset.drop(columns=[most_important_attribute]),
                     current_node,
                     parent_attribute_value=value,
+                    parent_majority_class=self._get_majority_class(dataset)
                 )
 
     def _have_same_classification(self, dataset):
@@ -65,6 +66,9 @@ class DecisionTree(Tree):
         ):
             return True, sample_classification_value
         return False, None
+    
+    def _get_majority_class(self, dataset):
+        return dataset[self.classification_attribute].mode().values[0]
 
     def _get_most_important_attribute(self, dataset):
         attributes = dataset.columns.drop(self.classification_attribute)
