@@ -1,5 +1,6 @@
 from treelib import Node, Tree
 import numpy as np
+import pandas as pd
 
 
 class DecisionTreeNode(Node):
@@ -54,9 +55,6 @@ class DecisionTree(Tree):
                     parent_attribute_value=value,
                 )
 
-    def evaluate(self, instance):
-        pass
-
     def _have_same_classification(self, dataset):
         sample_classification_value = dataset[self.classification_attribute].iloc[0]
         if (
@@ -98,3 +96,17 @@ class DecisionTree(Tree):
 
     def _get_attribute_values(self, dataset, attribute):
         return dataset[attribute].unique()
+
+    def predict(self, instances: pd.DataFrame):
+        predictions = []
+        number_of_instances = instances.shape[0] # Number of rows in the dataframe
+        for i in range(number_of_instances):
+            predictions.append(self._walk_to_leaf_node(self.get_node(self.root), instances.iloc[i]))
+        return predictions
+
+    def _walk_to_leaf_node(self, node: Node, instance):
+        if node.is_leaf():
+            return node.decision
+        for c in self.children(node.identifier):
+            if instance[node.attribute] == c.parent_attribute_value:
+                return self._walk_to_leaf_node(c, instance)

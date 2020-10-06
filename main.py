@@ -1,21 +1,20 @@
 import pandas as pd
 from decision_tree import DecisionTree
 
-dataset = {
-    'hungry': ['yes', 'yes', 'no', 'yes', 'no'],
-    'raining': ['no', 'no', 'no', 'yes', 'no'],
-    'classification': ['true', 'true', 'false', 'false', 'false'],
-}
+train_dataset = pd.read_csv('test_dataset.csv', sep=';')
 
 test_dataset = {
-    'tempo': ['ensolarado', 'ensolarado', 'nublado', 'chuvoso', 'chuvoso', 'chuvoso', 'nublado', 'ensolarado', 'ensolarado', 'chuvoso', 'ensolarado', 'nublado', 'nublado', 'chuvoso'],
-    'temperatura': ['quente', 'quente', 'quente', 'amena', 'fria', 'fria', 'fria', 'amena', 'fria', 'amena', 'amena', 'amena', 'quente', 'amena'],
-    'umidade': ['alta', 'alta', 'alta', 'alta', 'normal', 'normal', 'normal', 'alta', 'normal', 'normal', 'normal', 'alta', 'normal', 'alta'],
-    'ventoso': ['falso', 'verdadeiro', 'falso', 'falso', 'falso', 'verdadeiro', 'verdadeiro', 'falso', 'falso', 'falso', 'verdadeiro', 'verdadeiro', 'falso', 'verdadeiro'],
-    'joga': ['nao', 'nao', 'sim', 'sim', 'sim', 'nao', 'sim', 'nao', 'sim', 'sim', 'sim', 'sim', 'sim', 'nao'] 
+    'Tempo': ['Ensolarado', 'Nublado'],
+    'Temperatura': ['Quente', 'Quente'],
+    'Umidade': ['Alta', 'Alta'],
+    'Ventoso': ['Falso', 'Falso'] 
 }
 
-dataframe = pd.DataFrame(data=test_dataset)
-decision_tree = DecisionTree('joga')
-decision_tree.construct(dataframe)
+train_dataframe = pd.DataFrame(data=train_dataset)
+test_dataframe = pd.DataFrame(data=test_dataset)
+
+decision_tree = DecisionTree(classification_attribute='Joga')
+decision_tree.construct(train_dataset)
+predictions = decision_tree.predict(test_dataframe)
 decision_tree.show()
+print(predictions)
