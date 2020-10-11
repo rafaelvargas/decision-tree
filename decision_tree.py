@@ -1,3 +1,4 @@
+from typing import Dict
 from treelib import Node, Tree
 import numpy as np
 import pandas as pd
@@ -17,11 +18,14 @@ class DecisionTreeNode(Node):
 
 
 class DecisionTree(Tree):
-    def __init__(self, classification_attribute):
+    def __init__(self, classification_attribute, possible_values_for_categorical_attributes: Dict = None):
         super().__init__()
         self.classification_attribute = classification_attribute
+        self.possible_values_for_categorical_attributes = possible_values_for_categorical_attributes
 
     def train(self, dataset):
+        if (self.possible_values_for_categorical_attributes is None):
+            self.possible_values_for_categorical_attributes = self._get_possible_values_for_categorical_attributes(dataset)
         self.construct(dataset, subset=dataset)
     
     def construct(self, dataset, subset=None, parent=None, parent_attribute_value=None):
@@ -49,16 +53,13 @@ class DecisionTree(Tree):
                 parent_attribute_value=parent_attribute_value,
                 information_gain=information_gain
             )
-            attribute_values = self._get_attribute_values(
-                dataset, most_important_attribute
-            )
 
             if parent:
                 self.add_node(current_node, parent=parent)
             else:
                 self.add_node(current_node) # Root
 
-            for value in attribute_values:
+            for value in self.possible_values_for_categorical_attributes[most_important_attribute]:
                 new_subset = subset.loc[subset[most_important_attribute] == value]
                 if not self._has_instances(new_subset): # When the new subset has no instances
                     self.add_node(
@@ -124,8 +125,11 @@ class DecisionTree(Tree):
             entropy += subset_propability * np.log2(1.0 / subset_propability)
         return entropy
 
-    def _get_attribute_values(self, dataset, attribute):
-        return dataset[attribute].unique()
+    def _get_possible_values_for_categorical_attributes(self, dataset: pd.DataFrame) -> Dict:
+        values_for_each_attribute = {}
+        for column in dataset:
+            values_for_each_attribute[column] = dataset[column].unique()
+        return values_for_each_attribute
 
     def predict(self, instances: pd.DataFrame):
         predictions = []
