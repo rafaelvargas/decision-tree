@@ -21,11 +21,12 @@ class DecisionTree(Tree):
         super().__init__()
         self.classification_attribute = classification_attribute
 
-    def construct(self, dataset, parent=None, parent_attribute_value=None, parent_majority_class=None):
-        have_same_classification, classification = self._have_same_classification(
-            dataset
-        )
-        if have_same_classification:
+    def train(self, dataset):
+        self.construct(dataset, subset=dataset)
+    
+    def construct(self, dataset, subset=None, parent=None, parent_attribute_value=None):
+        is_pure_subset, classification = self._is_pure_subset(subset)
+        if is_pure_subset:
             self.add_node(
                 DecisionTreeNode(
                     decision=classification,
@@ -33,8 +34,16 @@ class DecisionTree(Tree):
                 ),
                 parent=parent
             )
+        elif not self._has_attributes(subset):
+            self.add_node(
+                DecisionTreeNode(
+                    decision=self._get_majority_class(subset),
+                    parent_attribute_value=parent_attribute_value
+                ),
+                parent=parent
+            )
         else:
-            most_important_attribute, information_gain = self._get_most_important_attribute(dataset)
+            most_important_attribute, information_gain = self._get_most_important_attribute(subset)
             current_node = DecisionTreeNode(
                 attribute=most_important_attribute,
                 parent_attribute_value=parent_attribute_value,
@@ -43,20 +52,31 @@ class DecisionTree(Tree):
             attribute_values = self._get_attribute_values(
                 dataset, most_important_attribute
             )
+
             if parent:
                 self.add_node(current_node, parent=parent)
             else:
-                self.add_node(current_node)
-            for value in attribute_values:
-                data_subset = dataset.loc[dataset[most_important_attribute] == value]
-                self.construct(
-                    data_subset.drop(columns=[most_important_attribute]),
-                    current_node,
-                    parent_attribute_value=value,
-                    parent_majority_class=self._get_majority_class(dataset)
-                )
+                self.add_node(current_node) # Root
 
-    def _have_same_classification(self, dataset):
+            for value in attribute_values:
+                new_subset = subset.loc[subset[most_important_attribute] == value]
+                if not self._has_instances(new_subset): # When the new subset has no instances
+                    self.add_node(
+                        DecisionTreeNode(
+                            decision=self._get_majority_class(subset),
+                            parent_attribute_value=value
+                        ),
+                        parent=current_node
+                    )
+                else:      
+                    self.construct(
+                        dataset=dataset,
+                        subset=new_subset.drop(columns=[most_important_attribute]),
+                        parent=current_node,
+                        parent_attribute_value=value
+                    )
+
+    def _is_pure_subset(self, dataset):
         sample_classification_value = dataset[self.classification_attribute].iloc[0]
         if (
             dataset.shape[0]
@@ -66,6 +86,12 @@ class DecisionTree(Tree):
         ):
             return True, sample_classification_value
         return False, None
+    
+    def _has_attributes(self, dataset) -> bool:
+        return dataset.shape[1] > 1
+
+    def _has_instances(self, dataset) -> bool:
+        return dataset.shape[0] > 0
     
     def _get_majority_class(self, dataset):
         return dataset[self.classification_attribute].mode().values[0]

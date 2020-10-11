@@ -1,7 +1,8 @@
 import pandas as pd
 from decision_tree import DecisionTree
 
-train_dataset = pd.read_csv('test_dataset.csv', sep=';')
+# Example dataset
+example_dataset = pd.read_csv('data/example_dataset.csv', sep=';')
 
 test_dataset = {
     'Tempo': ['Ensolarado', 'Nublado'],
@@ -10,11 +11,27 @@ test_dataset = {
     'Ventoso': ['Falso', 'Falso'] 
 }
 
-train_dataframe = pd.DataFrame(data=train_dataset)
+train_dataframe = pd.DataFrame(data=example_dataset)
 test_dataframe = pd.DataFrame(data=test_dataset)
 
 decision_tree = DecisionTree(classification_attribute='Joga')
-decision_tree.construct(train_dataset)
+decision_tree.train(example_dataset)
 predictions = decision_tree.predict(test_dataframe)
+
+print('Example dataset - resultant decision tree:\n')
 decision_tree.show()
-print(predictions)
+
+print('Test dataset:')
+print(test_dataframe)
+
+print(f'\nPredictions: {predictions}\n\n')
+
+
+# Votes dataset
+train_dataframe = pd.read_csv('data/house_votes_84.tsv', sep='\t') 
+
+decision_tree = DecisionTree(classification_attribute='target')
+decision_tree.train(train_dataframe)
+
+print('Votes dataset - resultant decision tree:\n')
+decision_tree.show()
