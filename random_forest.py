@@ -1,4 +1,5 @@
 from typing import Dict
+
 import pandas as pd
 
 from decision_tree import DecisionTree
@@ -20,7 +21,7 @@ class RandomForest:
         self.random_state = random_state
         self.tree_ensemble = []
 
-    def construct(self, dataset: pd.DataFrame):
+    def train(self, dataset: pd.DataFrame):
         bootstraps = self._bootstrap_aggregation(dataset)
         for b in bootstraps:
             decision_tree = DecisionTree(
@@ -53,6 +54,8 @@ class RandomForest:
 
     def _get_mode_for_each_train_sample_predictions(self, prediction_ensemble):
         prediction_ensemble_dataframe = pd.DataFrame(prediction_ensemble)
-        predictions = prediction_ensemble_dataframe.mode(axis=0)
-        return predictions.iloc[0].values
+        modes = []
+        for key, values in prediction_ensemble_dataframe.iteritems():
+            modes.append(values.mode()[0]) 
+        return modes
     
