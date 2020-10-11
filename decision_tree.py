@@ -1,4 +1,6 @@
 from typing import Dict
+import math
+
 from treelib import Node, Tree
 import numpy as np
 import pandas as pd
@@ -18,14 +20,26 @@ class DecisionTreeNode(Node):
 
 
 class DecisionTree(Tree):
-    def __init__(self, classification_attribute, possible_values_for_categorical_attributes: Dict = None):
+    def __init__(
+        self, 
+        classification_attribute: str, 
+        possible_values_for_categorical_attributes: Dict = None,
+        use_feature_bagging: bool = False,
+        random_state: int = 42
+    ):
         super().__init__()
         self.classification_attribute = classification_attribute
         self.possible_values_for_categorical_attributes = possible_values_for_categorical_attributes
+        self.use_feature_bagging = use_feature_bagging
+        self.random_state = random_state
 
     def train(self, dataset):
         if (self.possible_values_for_categorical_attributes is None):
             self.possible_values_for_categorical_attributes = self._get_possible_values_for_categorical_attributes(dataset)
+        if (self.use_feature_bagging):
+            self.feature_bag_size = math.isqrt(dataset.shape[1] - 1)
+        else:
+            self.feature_bag_size = dataset.shape[1] - 1
         self.construct(dataset, subset=dataset)
     
     def construct(self, dataset, subset=None, parent=None, parent_attribute_value=None):
@@ -99,6 +113,8 @@ class DecisionTree(Tree):
 
     def _get_most_important_attribute(self, dataset):
         attributes = dataset.columns.drop(self.classification_attribute)
+        if (self.use_feature_bagging):
+            attributes = self._sample_attributes(attributes.to_series())
         most_important_attribute = attributes[0]
         most_important_attribute_entropy = 1.0
         for attribute in attributes:
@@ -130,6 +146,17 @@ class DecisionTree(Tree):
         for column in dataset:
             values_for_each_attribute[column] = dataset[column].unique()
         return values_for_each_attribute
+    
+    def _sample_attributes(self, attributes: pd.Series):
+        number_of_attributes_to_sample = self.feature_bag_size
+        if (self.feature_bag_size > len(attributes)):
+            number_of_attributes_to_sample = len(attributes)
+        sampled_attributes = attributes.sample(
+            n=number_of_attributes_to_sample, 
+            replace=False, 
+            random_state=self.random_state
+        )
+        return sampled_attributes
 
     def predict(self, instances: pd.DataFrame):
         predictions = []

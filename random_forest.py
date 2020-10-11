@@ -25,7 +25,8 @@ class RandomForest:
         for b in bootstraps:
             decision_tree = DecisionTree(
                 classification_attribute=self.classification_attribute, 
-                possible_values_for_categorical_attributes=self.possible_values_for_categorical_attributes
+                possible_values_for_categorical_attributes=self.possible_values_for_categorical_attributes,
+                use_feature_bagging=True
             )
             decision_tree.train(b)
             self.tree_ensemble.append(decision_tree)
@@ -34,9 +35,14 @@ class RandomForest:
         number_of_samples = dataset.shape[0]
         bootstraps = []
         for i in range(self.number_of_trees):
-            # TODO: Each bootstrap must have all the possible values for an attribute
-            bootstraps.append(dataset.sample(n=int(number_of_samples/self.number_of_trees), random_state=(self.random_state * (i + 1)), replace=True))
-        return bootstraps # TODO: Check the number of samples for each group
+            bootstraps.append(
+                dataset.sample(
+                    n=int(number_of_samples/self.number_of_trees), 
+                    random_state=(self.random_state * (i + 1)), 
+                    replace=True
+                )
+            )
+        return bootstraps
 
     def predict(self, samples):
         prediction_ensemble = []
