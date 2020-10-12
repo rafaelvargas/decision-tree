@@ -6,7 +6,15 @@ from decision_tree import DecisionTree
 
 def test_resultant_tree():
     example_dataset = pd.read_csv('data/example_dataset.csv', sep=';')
-    decision_tree = DecisionTree(classification_attribute='Joga')
+    decision_tree = DecisionTree(
+        classification_attribute='Joga',
+        attribute_types={
+            'Tempo': 'discrete',
+            'Temperatura': 'discrete',
+            'Umidade': 'discrete',
+            'Ventoso': 'discrete' 
+        }
+    )
     decision_tree.train(example_dataset)
     expected_tree = json.dumps({
         "('Tempo', 0.247)": {

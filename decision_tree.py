@@ -23,12 +23,14 @@ class DecisionTree(Tree):
     def __init__(
         self, 
         classification_attribute: str, 
+        attribute_types: Dict[str, str],
         possible_values_for_categorical_attributes: Dict = None,
         use_feature_bagging: bool = False,
         random_state: int = 42
     ):
         super().__init__()
         self.classification_attribute = classification_attribute
+        self.attribute_types = attribute_types
         self.possible_values_for_categorical_attributes = possible_values_for_categorical_attributes
         self.use_feature_bagging = use_feature_bagging
         self.random_state = random_state
@@ -61,7 +63,7 @@ class DecisionTree(Tree):
                 parent=parent
             )
         else:
-            most_important_attribute, information_gain = self._get_most_important_attribute(subset)
+            most_important_attribute, information_gain, splitting_criterion = self._get_most_important_attribute(subset)
             current_node = DecisionTreeNode(
                 attribute=most_important_attribute,
                 parent_attribute_value=parent_attribute_value,
@@ -73,22 +75,61 @@ class DecisionTree(Tree):
             else:
                 self.add_node(current_node) # Root
 
-            for value in self.possible_values_for_categorical_attributes[most_important_attribute]:
-                new_subset = subset.loc[subset[most_important_attribute] == value]
-                if not self._has_instances(new_subset): # When the new subset has no instances
+            if (self.attribute_types[most_important_attribute] == 'discrete'):
+                for value in self.possible_values_for_categorical_attributes[most_important_attribute]:
+                    new_subset = subset.loc[subset[most_important_attribute] == value]
+                    if not self._has_instances(new_subset): # When the new subset has no instances
+                        self.add_node(
+                            DecisionTreeNode(
+                                decision=self._get_majority_class(subset),
+                                parent_attribute_value=value
+                            ),
+                            parent=current_node
+                        )
+                    else:      
+                        self.construct(
+                            dataset=dataset,
+                            subset=new_subset.drop(columns=[most_important_attribute]),
+                            parent=current_node,
+                            parent_attribute_value=value
+                        )
+            else:
+                # Continuous attribute
+                left = subset[subset[most_important_attribute] <= splitting_criterion]
+                right = subset[subset[most_important_attribute] > splitting_criterion]
+
+                # Left
+                if not self._has_instances(left): # When the new subset has no instances
                     self.add_node(
                         DecisionTreeNode(
                             decision=self._get_majority_class(subset),
-                            parent_attribute_value=value
+                            parent_attribute_value=f'<= {splitting_criterion}'
                         ),
                         parent=current_node
                     )
                 else:      
                     self.construct(
                         dataset=dataset,
-                        subset=new_subset.drop(columns=[most_important_attribute]),
+                        subset=left.drop(columns=[most_important_attribute]),
                         parent=current_node,
-                        parent_attribute_value=value
+                        parent_attribute_value=f'<= {splitting_criterion}'
+                    )
+                
+                # Right
+                if not self._has_instances(right): # When the new subset has no instances
+                    self.add_node(
+                        DecisionTreeNode(
+                            decision=self._get_majority_class(subset),
+                            parent_attribute_value=f'> {splitting_criterion}'
+                        ),
+                        parent=current_node
+                    )
+                else:      
+                    self.construct(
+                        dataset=dataset,
+                        subset=right.drop(columns=[most_important_attribute]),
+                        parent=current_node,
+                        parent_attribute_value=f'> {splitting_criterion}'
                     )
 
     def _is_pure_subset(self, dataset):
@@ -117,19 +158,26 @@ class DecisionTree(Tree):
             attributes = self._sample_attributes(attributes.to_series())
         most_important_attribute = attributes[0]
         most_important_attribute_entropy = 1.0
+        best_splitting_criterion = None
         for attribute in attributes:
-            # Using ID3
-            grouped_by_values = dataset.groupby(attribute)
             attribute_entropy = 0.0
-            for index, subset_values in grouped_by_values:
-                entropy = self._calculate_entropy(subset_values)
-                attribute_entropy += subset_values.shape[0] / dataset.shape[0] * entropy
+            splitting_criterion = None
+            if (self.attribute_types[attribute] == 'discrete'):
+                # Using ID3
+                grouped_by_attribute_values = dataset.groupby(attribute)
+                for index, subset_values in grouped_by_attribute_values:
+                    entropy = self._calculate_entropy(subset_values)
+                    attribute_entropy += subset_values.shape[0] / dataset.shape[0] * entropy
+            else:
+                # Using C4.5
+                splitting_criterion, attribute_entropy = self._calculate_entropy_continuous_attributes(dataset, attribute)
             if attribute_entropy < most_important_attribute_entropy:
                 most_important_attribute = attribute
                 most_important_attribute_entropy = attribute_entropy
+                best_splitting_criterion = splitting_criterion
         dataset_entropy = self._calculate_entropy(dataset)
         information_gain = round(dataset_entropy - most_important_attribute_entropy, 3)
-        return most_important_attribute, information_gain
+        return most_important_attribute, information_gain, best_splitting_criterion
 
     def _calculate_entropy(self, subset):
         grouped_by_classification = subset.groupby(self.classification_attribute)
@@ -140,6 +188,28 @@ class DecisionTree(Tree):
             )
             entropy += subset_propability * np.log2(1.0 / subset_propability)
         return entropy
+
+    def _calculate_entropy_continuous_attributes(self, dataset: pd.DataFrame, attribute: str):
+        sorted_instances = dataset.sort_values(attribute)
+        best_splitting_criterion = (sorted_instances.iloc[0][attribute] + sorted_instances.iloc[1][attribute]) / 2.0
+        
+        left = sorted_instances[sorted_instances[attribute] <= best_splitting_criterion]
+        right = sorted_instances[sorted_instances[attribute] > best_splitting_criterion]
+        left_entropy = self._calculate_entropy(left)
+        right_entropy = self._calculate_entropy(right)
+        best_split_entropy = ((left.shape[0] / dataset.shape[0]) * left_entropy) + ((right.shape[0] / dataset.shape[0]) * right_entropy)
+
+        for i in range(1, sorted_instances.shape[0] - 1):
+            splitting_criterion = (sorted_instances.iloc[i][attribute] + sorted_instances.iloc[i + 1][attribute]) / 2.0
+            left = sorted_instances[sorted_instances[attribute] <= splitting_criterion]
+            right = sorted_instances[sorted_instances[attribute] > splitting_criterion]
+            left_entropy = self._calculate_entropy(left)
+            right_entropy = self._calculate_entropy(right)
+            current_split_entropy = ((left.shape[0] / dataset.shape[0]) * left_entropy) + ((right.shape[0] / dataset.shape[0]) * right_entropy)
+            if (current_split_entropy < best_split_entropy):
+                best_split_entropy = current_split_entropy
+                best_splitting_criterion = splitting_criterion
+        return best_splitting_criterion, best_split_entropy
 
     def _get_possible_values_for_categorical_attributes(self, dataset: pd.DataFrame) -> Dict:
         values_for_each_attribute = {}
