@@ -10,6 +10,7 @@ class RandomForest:
         self, 
         number_of_trees: int, 
         classification_attribute: str, 
+        attribute_types: Dict[str, str],
         possible_values_for_categorical_attributes: Dict = None,
         random_state: int = 42
     ):
@@ -17,6 +18,7 @@ class RandomForest:
             raise ValueError('Invalid number of trees. It must be greater or equal to two.')
         self.number_of_trees = number_of_trees
         self.classification_attribute = classification_attribute
+        self.attribute_types = attribute_types
         self.possible_values_for_categorical_attributes = possible_values_for_categorical_attributes
         self.random_state = random_state
         self.tree_ensemble = []
@@ -26,6 +28,7 @@ class RandomForest:
         for b in bootstraps:
             decision_tree = DecisionTree(
                 classification_attribute=self.classification_attribute, 
+                attribute_types=self.attribute_types,
                 possible_values_for_categorical_attributes=self.possible_values_for_categorical_attributes,
                 use_feature_bagging=True
             )

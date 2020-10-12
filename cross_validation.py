@@ -8,9 +8,8 @@ class KFoldCrossValidator:
         self.verbose = verbose
 
     def validate(self, classifier, data):
-        print(data.shape[0])
         generated_folds = self._generate_folds(data, classifier.classification_attribute)
-        results = []
+        results = pd.DataFrame(columns=['k', 'accuracy', 'f1_score'])
         for k in range(self.number_of_folds):
             if (self.verbose): 
                 print(f'Current testing fold: {k + 1}')
@@ -19,13 +18,11 @@ class KFoldCrossValidator:
             classifier.train(train_data)
             predicted_labels = classifier.predict(test_fold.drop(columns=[classifier.classification_attribute]))
             expected_labels = list(test_fold[classifier.classification_attribute])
-            results.append(
-                (
-                    k + 1, 
-                    self._calculate_accuracy(expected_labels, predicted_labels), 
-                    self._calculate_f1_score(expected_labels, predicted_labels)
-                )
-            )
+            results = results.append({
+                    'k': k + 1, 
+                    'accuracy': self._calculate_accuracy(expected_labels, predicted_labels), 
+                    'f1_score': self._calculate_f1_score(expected_labels, predicted_labels)
+            }, ignore_index=True)
         return results
 
     def _append_train_folds(self, folds, current_test_fold_index: int) -> pd.DataFrame:
