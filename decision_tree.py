@@ -7,7 +7,7 @@ import pandas as pd
 
 
 class DecisionTreeNode(Node):
-    def __init__(self, attribute=None, parent_attribute_value=None, decision=None, information_gain=None):
+    def __init__(self, attribute=None, parent_attribute_value=None, division_criterion = None, decision=None, information_gain=None):
         if decision is not None:
             super().__init__(tag=str((parent_attribute_value, decision)))
         elif parent_attribute_value is None:
@@ -17,6 +17,7 @@ class DecisionTreeNode(Node):
         self.parent_attribute_value = parent_attribute_value
         self.attribute = attribute
         self.decision = decision
+        self.division_criterion = division_criterion
 
 
 class DecisionTree(Tree):
@@ -44,13 +45,14 @@ class DecisionTree(Tree):
             self.feature_bag_size = dataset.shape[1] - 1
         self.construct(dataset, subset=dataset)
     
-    def construct(self, dataset, subset=None, parent=None, parent_attribute_value=None):
+    def construct(self, dataset, subset=None, parent=None, parent_attribute_value=None, division_criterion=None):
         is_pure_subset, classification = self._is_pure_subset(subset)
         if is_pure_subset:
             self.add_node(
                 DecisionTreeNode(
                     decision=classification,
                     parent_attribute_value=parent_attribute_value,
+                    division_criterion=division_criterion
                 ),
                 parent=parent
             )
@@ -58,7 +60,8 @@ class DecisionTree(Tree):
             self.add_node(
                 DecisionTreeNode(
                     decision=self._get_majority_class(subset),
-                    parent_attribute_value=parent_attribute_value
+                    parent_attribute_value=parent_attribute_value,
+                    division_criterion=division_criterion
                 ),
                 parent=parent
             )
@@ -67,7 +70,8 @@ class DecisionTree(Tree):
             current_node = DecisionTreeNode(
                 attribute=most_important_attribute,
                 parent_attribute_value=parent_attribute_value,
-                information_gain=information_gain
+                information_gain=information_gain,
+                division_criterion=division_criterion
             )
 
             if parent:
@@ -103,7 +107,8 @@ class DecisionTree(Tree):
                     self.add_node(
                         DecisionTreeNode(
                             decision=self._get_majority_class(subset),
-                            parent_attribute_value=f'<= {splitting_criterion}'
+                            parent_attribute_value=f'<= {splitting_criterion}',
+                            division_criterion=(lambda x : x <= splitting_criterion)
                         ),
                         parent=current_node
                     )
@@ -112,7 +117,8 @@ class DecisionTree(Tree):
                         dataset=dataset,
                         subset=left.drop(columns=[most_important_attribute]),
                         parent=current_node,
-                        parent_attribute_value=f'<= {splitting_criterion}'
+                        parent_attribute_value=f'<= {splitting_criterion}',
+                        division_criterion=(lambda x : x <= splitting_criterion)
                     )
                 
                 # Right
@@ -120,7 +126,8 @@ class DecisionTree(Tree):
                     self.add_node(
                         DecisionTreeNode(
                             decision=self._get_majority_class(subset),
-                            parent_attribute_value=f'> {splitting_criterion}'
+                            parent_attribute_value=f'> {splitting_criterion}',
+                            division_criterion=(lambda x : x > splitting_criterion)
                         ),
                         parent=current_node
                     )
@@ -129,7 +136,8 @@ class DecisionTree(Tree):
                         dataset=dataset,
                         subset=right.drop(columns=[most_important_attribute]),
                         parent=current_node,
-                        parent_attribute_value=f'> {splitting_criterion}'
+                        parent_attribute_value=f'> {splitting_criterion}',
+                        division_criterion=(lambda x : x > splitting_criterion)
                     )
 
     def _is_pure_subset(self, dataset):
@@ -236,8 +244,13 @@ class DecisionTree(Tree):
         return predictions
 
     def _walk_to_leaf_node(self, node: Node, instance):
-        if node.is_leaf():
+        if (node.is_leaf()):
             return node.decision
-        for c in self.children(node.identifier):
-            if instance[node.attribute] == c.parent_attribute_value:
-                return self._walk_to_leaf_node(c, instance)
+        if (self.attribute_types[node.attribute] == 'discrete'):
+            for c in self.children(node.identifier):
+                if (instance[node.attribute] == c.parent_attribute_value):
+                    return self._walk_to_leaf_node(c, instance)
+        else:
+            for c in self.children(node.identifier):
+                if (c.division_criterion(instance[node.attribute])):
+                    return self._walk_to_leaf_node(c, instance)
