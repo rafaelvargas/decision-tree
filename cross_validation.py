@@ -19,7 +19,7 @@ class KFoldCrossValidator:
             predicted_labels = classifier.predict(test_fold.drop(columns=[classifier.classification_attribute]))
             expected_labels = list(test_fold[classifier.classification_attribute])
             results = results.append({
-                    'k': k + 1, 
+                    'k': k + 1,
                     'accuracy': self._calculate_accuracy(expected_labels, predicted_labels), 
                     'f1_score': self._calculate_f1_score(expected_labels, predicted_labels)
             }, ignore_index=True)
@@ -43,7 +43,6 @@ class KFoldCrossValidator:
             group_proportion = elements_by_group / total_number_of_elements
             number_of_elements_to_sample = int(np.floor(number_of_elements_by_fold * group_proportion))
             number_of_elements_to_sample_by_class[group_class] = number_of_elements_to_sample
-            print(group_class, elements_by_group)
 
         np.random.seed(self.random_state)
         folds = []

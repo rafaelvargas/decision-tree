@@ -14,8 +14,6 @@ class RandomForest:
         possible_values_for_categorical_attributes: Dict = None,
         random_state: int = 42
     ):
-        if number_of_trees < 2:
-            raise ValueError('Invalid number of trees. It must be greater or equal to two.')
         self.number_of_trees = number_of_trees
         self.classification_attribute = classification_attribute
         self.attribute_types = attribute_types
@@ -30,7 +28,8 @@ class RandomForest:
                 classification_attribute=self.classification_attribute, 
                 attribute_types=self.attribute_types,
                 possible_values_for_categorical_attributes=self.possible_values_for_categorical_attributes,
-                use_feature_bagging=True
+                use_feature_bagging=True,
+                random_state=self.random_state
             )
             decision_tree.train(b)
             self.tree_ensemble.append(decision_tree)
@@ -41,7 +40,7 @@ class RandomForest:
         for i in range(self.number_of_trees):
             bootstraps.append(
                 dataset.sample(
-                    n=int(number_of_samples/self.number_of_trees), 
+                    n=number_of_samples, # TODO: The number of items ot be sampled should be reviewed
                     random_state=(self.random_state * (i + 1)), 
                     replace=True
                 )
