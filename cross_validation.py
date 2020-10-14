@@ -2,10 +2,11 @@ import numpy as np
 import pandas as pd
 
 class KFoldCrossValidator:
-    def __init__(self, number_of_folds: int, random_state: int = 42, verbose: bool = False):
+    def __init__(self, number_of_folds: int, random_state: int = 42, is_binary_classification: bool = True,  verbose: bool = False):
         self.number_of_folds = number_of_folds # TODO: Needs to have one or more 
         self.random_state = random_state
         self.verbose = verbose
+        self.is_binary_classification = is_binary_classification
 
     def validate(self, classifier, data):
         generated_folds = self._generate_folds(data, classifier.classification_attribute)
@@ -21,7 +22,7 @@ class KFoldCrossValidator:
             results = results.append({
                     'k': k + 1,
                     'accuracy': self._calculate_accuracy(expected_labels, predicted_labels), 
-                    'f1_score': self._calculate_f1_score(expected_labels, predicted_labels)
+                    'f1_score': self._calculate_f1_score(expected_labels, predicted_labels) if self.is_binary_classification else None
             }, ignore_index=True)
         return results
 
