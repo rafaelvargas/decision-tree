@@ -1,4 +1,5 @@
 from typing import Dict
+from sys import float_info
 import math
 
 from treelib import Node, Tree
@@ -165,7 +166,7 @@ class DecisionTree(Tree):
         if (self.use_feature_bagging):
             attributes = self._sample_attributes(attributes.to_series())
         most_important_attribute = attributes[0]
-        most_important_attribute_entropy = 1.0
+        most_important_attribute_entropy = float_info.max
         best_splitting_criterion = None
         for attribute in attributes:
             attribute_entropy = 0.0
