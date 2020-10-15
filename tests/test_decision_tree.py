@@ -5,7 +5,7 @@ from decision_tree import DecisionTree
 
 
 def test_resultant_tree():
-    example_dataset = pd.read_csv('data/example_dataset.csv', sep=';')
+    example_dataset = pd.read_csv('data/benchmark_dataset.tsv', sep='\t')
     decision_tree = DecisionTree(
         classification_attribute='Joga',
         attribute_types={
