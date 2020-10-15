@@ -19,7 +19,16 @@ The float numbers are the information gains for each division.
 ![United State Congressional Votes Dataset](results/trees/usa_congressional_votes_tree.png)
 
 
+### Running experiments
+
+To view some of the resultant decision trees considering the datasets that are in the `data` folder, run the folowing command:
+
+```
+python3 main.py
+```
+
 ## Random Forest
 
 
-## Cross Validation
+## _k_-Fold Cross Validation
+

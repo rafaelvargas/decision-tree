@@ -1,19 +1,16 @@
 import pandas as pd
 from decision_tree import DecisionTree
+import sys
 
 
-def example_dataset():
-    # Example dataset
-    example_dataset = pd.read_csv('data/example_dataset.csv', sep=';')
-
-    test_dataset = {
+def benchmark_dataset():
+    benchmark_dataset = pd.read_csv('data/benchmark_dataset.tsv', sep='\t')
+    test_dataset = pd.DataFrame(data={
         'Tempo': ['Ensolarado', 'Nublado'],
         'Temperatura': ['Quente', 'Quente'],
         'Umidade': ['Alta', 'Alta'],
         'Ventoso': ['Falso', 'Falso'] 
-    }
-
-    test_dataframe = pd.DataFrame(data=test_dataset)
+    })
 
     decision_tree = DecisionTree(
         classification_attribute='Joga', 
@@ -24,20 +21,39 @@ def example_dataset():
             'Ventoso': 'discrete' 
         }
     )
-    decision_tree.train(example_dataset)
-    predictions = decision_tree.predict(test_dataframe)
 
-    print('Example dataset - resultant decision tree:\n')
+    decision_tree.train(benchmark_dataset)
+    predictions = decision_tree.predict(test_dataset)
+
+    sys.stdout.write('\x1b[1;34m' + 'Benchmark dataset - resultant decision tree:' + '\x1b[0m' + '\n\n')
     decision_tree.show()
 
     print('Test dataset:')
-    print(test_dataframe)
+    print(test_dataset)
 
     print(f'\nPredictions: {predictions}\n\n')
 
 def votes_dataset():
     # Votes dataset
     train_dataframe = pd.read_csv('data/house_votes_84.tsv', sep='\t') 
+    test_dataset = pd.DataFrame(data={
+            'handicapped-infants' : [1],
+            'water-project-cost-sharing' : [2],
+            'adoption-of-the-budget-resolution' : [1],
+            'physician-fee-freeze' : [2],
+            'el-salvador-adi' : [2],
+            'religious-groups-in-schools' : [2],
+            'anti-satellite-test-ban' : [1],
+            'aid-to-nicaraguan-contras'	 : [1],
+            'mx-missile' : [1],
+            'immigration' : [2],
+            'synfuels-corporation-cutback' : [0],
+            'education-spending' : [2],
+            'superfund-right-to-sue' : [2],
+            'crime' : [2],
+            'duty-free-exports' : [1],
+            'export-administration-act-south-africa' : [2]
+    })
 
     decision_tree = DecisionTree(
         classification_attribute='target', 
@@ -62,14 +78,21 @@ def votes_dataset():
     )
     decision_tree.train(train_dataframe)
 
-    print('Votes dataset - resultant decision tree:\n')
+    sys.stdout.write('\x1b[1;34m' + 'Votes dataset - resultant decision tree:' + '\x1b[0m' + '\n\n')
+    
     decision_tree.show()
+
+    print('Test dataset:')
+    print(test_dataset)
+
+    print(f'\nPredictions: {decision_tree.predict(test_dataset)}\n\n')
+    
 
 def wine_dataset():
     # Wine dataset
-    train_dataframe = pd.read_csv('data/wine_recognition.tsv', sep='\t')
+    wine_dataset = pd.read_csv('data/wine_recognition.tsv', sep='\t')
 
-    test_dataframe = pd.DataFrame({    
+    test_dataset = pd.DataFrame({    
         '1': [14.23],	
         '2': [1.71],	
         '3': [2.43],	
@@ -103,14 +126,19 @@ def wine_dataset():
             '13': 'continuous'
         }
     )
-    decision_tree.train(train_dataframe)
+    decision_tree.train(wine_dataset)
 
-    print('Wine dataset - resultant decision tree:\n')
+    sys.stdout.write('\x1b[1;34m' + 'Wine dataset - resultant decision tree:' + '\x1b[0m' + '\n\n')
     decision_tree.show()
 
-    print('Predictions:')
-    print(decision_tree.predict(test_dataframe))
+    print('Test dataset:')
+    print(test_dataset)
+    
+    print(f'\nPredictions: {decision_tree.predict(test_dataset)}\n\n')
+
 
 
 if __name__ == "__main__":
-    example_dataset()
+    benchmark_dataset()
+    votes_dataset()
+    wine_dataset()
