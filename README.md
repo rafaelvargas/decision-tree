@@ -1,6 +1,6 @@
 # Random Forest
 
-Implementation of the random forest algorithm.
+Implementation of the random forest ensemble learning method for classification.
 
 ## Installing the requirements
 ```
